@@ -1,14 +1,25 @@
 package io.github.qoggy.extension.boot;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import io.github.qoggy.extension.core.ExtensionContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * Spring Boot扩展框架自动配置类
+ *
  * @author yutianhong
  * @version 1.0
  * @since 2025/10/4 00:55
  */
 @Configuration
-@EnableConfigurationProperties(ExtensionProperties.class)
 public class ExtensionAutoConfiguration {
+    @Bean
+    public ExtensionContext extensionContext() {
+        return new ExtensionContext();
+    }
+
+    @Bean
+    public ExtensionInstantiationAwareBeanPostProcessor extensionInstantiationAwareBeanPostProcessor(ExtensionContext extensionContext) {
+        return new ExtensionInstantiationAwareBeanPostProcessor(extensionContext);
+    }
 }
