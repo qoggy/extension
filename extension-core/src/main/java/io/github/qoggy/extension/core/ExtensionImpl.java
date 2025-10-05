@@ -5,7 +5,8 @@ import io.github.qoggy.extension.core.util.ToStringHelper;
 import java.util.Objects;
 
 /**
- * 扩展实现包装器，用于封装扩展实现实例及其匹配器和优先级
+ * Extension implementation wrapper that encapsulates an extension instance along with its matcher and priority.
+ * Provides a unified way to manage extension implementations with their associated metadata.
  *
  * @author yutianhong
  * @version 1.0
@@ -20,21 +21,17 @@ public final class ExtensionImpl {
     private final Priority priority;
 
     /**
-     * 创建ExtensionImpl的Builder实例
+     * Creates a Builder instance for constructing ExtensionImpl objects.
      *
-     * @param instance 扩展实现实例
-     * @return Builder实例
+     * @param instance The extension implementation instance
+     * @return Builder instance for fluent configuration
      */
     public static Builder builder(Object instance) {
         return new Builder(instance);
     }
 
     /**
-     * 构造扩展实现，使用指定的匹配器和优先级
-     *
-     * @param instance 扩展实现实例，不能为null
-     * @param matcher  匹配器实现，如果为null则使用默认匹配器（总是匹配）
-     * @param priority 优先级实现，如果为null则使用默认优先级
+     * Constructs an extension implementation with the specified matcher and priority.
      */
     ExtensionImpl(Object instance, Matcher<?> matcher, Priority priority) {
         this.instance = Objects.requireNonNull(instance, "Extension instance must not be null");
@@ -43,7 +40,39 @@ public final class ExtensionImpl {
     }
 
     /**
-     * ExtensionImpl的Builder类，提供流式API来构建ExtensionImpl实例
+     * @return The extension implementation instance
+     */
+    public Object getInstance() {
+        return instance;
+    }
+
+    /**
+     * @return The matcher instance for context matching
+     */
+    public <T> Matcher<T> getMatcher() {
+        return (Matcher<T>) matcher;
+    }
+
+    /**
+     * @return The priority instance for ordering
+     */
+    public Priority getPriority() {
+        return priority;
+    }
+
+    /**
+     * Checks if this extension implementation can be assigned to the specified extension point interface.
+     *
+     * @param extensionPointInterface The extension point interface to check against
+     * @return true if this implementation can be assigned to the interface, false otherwise
+     */
+    public boolean isAssignableTo(Class<?> extensionPointInterface) {
+        Objects.requireNonNull(extensionPointInterface, "Extension point interface must not be null");
+        return extensionPointInterface.isAssignableFrom(instance.getClass());
+    }
+
+    /**
+     * Builder class for ExtensionImpl that provides a fluent API for constructing ExtensionImpl instances.
      */
     public static final class Builder {
         private final Object instance;
@@ -61,7 +90,7 @@ public final class ExtensionImpl {
         }
 
         /**
-         * 设置匹配器
+         * Sets the matcher for this extension implementation.
          */
         public Builder matcher(Matcher<?> matcher) {
             this.matcher = matcher;
@@ -69,7 +98,7 @@ public final class ExtensionImpl {
         }
 
         /**
-         * 设置优先级
+         * Sets the priority for this extension implementation.
          */
         public Builder priority(Priority priority) {
             this.priority = priority;
@@ -77,7 +106,7 @@ public final class ExtensionImpl {
         }
 
         /**
-         * 设置优先级值
+         * Sets the priority value for this extension implementation.
          */
         public Builder priority(int priorityValue) {
             this.priority = () -> priorityValue;
@@ -87,38 +116,6 @@ public final class ExtensionImpl {
         public ExtensionImpl build() {
             return new ExtensionImpl(instance, matcher, priority);
         }
-    }
-
-    /**
-     * @return 扩展实现实例
-     */
-    public Object getInstance() {
-        return instance;
-    }
-
-    /**
-     * @return 匹配器实例
-     */
-    public <T> Matcher<T> getMatcher() {
-        return (Matcher<T>) matcher;
-    }
-
-    /**
-     * @return 优先级实例
-     */
-    public Priority getPriority() {
-        return priority;
-    }
-
-    /**
-     * 检查当前扩展实现是否可以分配给指定的扩展点接口
-     *
-     * @param extensionPointInterface 扩展点接口
-     * @return 如果可以分配返回true，否则返回false
-     */
-    public boolean isAssignableTo(Class<?> extensionPointInterface) {
-        Objects.requireNonNull(extensionPointInterface, "Extension point interface must not be null");
-        return extensionPointInterface.isAssignableFrom(instance.getClass());
     }
 
     @Override

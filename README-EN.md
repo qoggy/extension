@@ -1,21 +1,21 @@
 # Extension Framework
 
-一个轻量级、易用的Java扩展点框架，专为解决复杂业务系统的扩展性问题而设计。通过定义扩展点接口和实现动态匹配机制，实现系统通用流程与业务特殊逻辑的完美解耦。
+A lightweight and easy-to-use Java extension point framework designed to solve extensibility problems in complex business systems. By defining extension point interfaces and implementing dynamic matching mechanisms, it achieves perfect decoupling between system universal processes and business-specific logic.
 
-[📖 English Documentation](README-EN.md) | 📖 中文文档
+📖 English Documentation | [📖 中文文档](README.md)
 
-## ✨ 核心特性
+## ✨ Core Features
 
-- **轻量级**：最小化依赖，专注核心功能
-- **简洁易用**：核心API只有几个类，5分钟上手
-- **渐进式复杂度**：从简单到复杂，按需使用高级特性
-- **Spring友好**：与Spring Boot无缝集成，支持依赖注入
+- **Lightweight**: Minimal dependencies, focused on core functionality
+- **Simple and Easy**: Core API has only a few classes, get started in 5 minutes
+- **Progressive Complexity**: From simple to complex, use advanced features as needed
+- **Spring Friendly**: Seamless integration with Spring Boot, supports dependency injection
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### Maven依赖
+### Maven Dependency
 
-**Spring Boot项目（推荐）：**
+**Spring Boot Project (Recommended):**
 ```xml
 <dependency>
     <groupId>io.github.qoggy</groupId>
@@ -24,7 +24,7 @@
 </dependency>
 ```
 
-**纯Java项目：**
+**Pure Java Project:**
 ```xml
 <dependency>
     <groupId>io.github.qoggy</groupId>
@@ -33,30 +33,30 @@
 </dependency>
 ```
 
-### 5分钟快速示例
+### 5-Minute Quick Example
 
-#### 1. 定义扩展点
+#### 1. Define Extension Point
 ```java
-// 业务扩展点接口
+// Business extension point interface
 interface PaymentProcessor {
     PayResult processPayment(Order order);
 }
 
-// 上下文对象
+// Context object
 class PaymentContext {
     private String paymentType;
     // getter/setter...
 }
 ```
 
-#### 2. 实现扩展
+#### 2. Implement Extension
 ```java
-// 使用@Extension注解标记扩展实现
+// Use @Extension annotation to mark extension implementation
 @Extension
 class AlipayProcessor implements PaymentProcessor, Matcher<PaymentContext>, Priority {
     @Override
     public PayResult processPayment(Order order) {
-        // 支付宝支付逻辑
+        // Alipay payment logic
         return new PayResult("alipay", "success");
     }
 
@@ -71,12 +71,12 @@ class AlipayProcessor implements PaymentProcessor, Matcher<PaymentContext>, Prio
     }
 }
 
-// 微信实现
+// WeChat implementation
 @Extension
 class WechatProcessor implements PaymentProcessor, Matcher<PaymentContext> {
     @Override
     public PayResult processPayment(Order order) {
-        // 微信支付逻辑
+        // WeChat payment logic
         return new PayResult("wechat", "success");
     }
 
@@ -87,14 +87,14 @@ class WechatProcessor implements PaymentProcessor, Matcher<PaymentContext> {
 }
 ```
 
-#### 3. 使用扩展点
+#### 3. Use Extension Point
 ```java
 @Service
 class OrderService {
     @Autowired
     private ExtensionContext extensionContext;
     
-    // 自动注入扩展点代理
+    // Auto-inject extension point proxy
     @ExtensionInject
     private PaymentProcessor paymentProcessor;
 
@@ -102,18 +102,18 @@ class OrderService {
         PaymentContext context = new PaymentContext(order.getPaymentType());
         
         try (var ignored = extensionContext.initScope(context)) {
-            // 框架自动选择匹配的实现
+            // Framework automatically selects matching implementation
             return paymentProcessor.processPayment(order);
         }
     }
 }
 ```
 
-## 🌈 纯Java项目使用
+## 🌈 Pure Java Project Usage
 
-### 1. 定义扩展实现
+### 1. Define Extension Implementation
 ```java
-// 支付宝实现（不使用@Extension注解）
+// Alipay implementation (without @Extension annotation)
 class AlipayProcessor implements PaymentProcessor, Matcher<PaymentContext>, Priority {
     @Override
     public PayResult processPayment(Order order) {
@@ -131,7 +131,7 @@ class AlipayProcessor implements PaymentProcessor, Matcher<PaymentContext>, Prio
     }
 }
 
-// 默认实现
+// Default implementation
 class DefaultPaymentProcessor implements PaymentProcessor, Priority {
     @Override
     public PayResult processPayment(Order order) {
@@ -145,15 +145,15 @@ class DefaultPaymentProcessor implements PaymentProcessor, Priority {
 }
 ```
 
-### 2. 手动注册和使用
+### 2. Manual Registration and Usage
 
-**方式一：直接查找**
+**Method 1: Direct Lookup**
 ```java
 class OrderService {
     private static final ExtensionContext extensionContext = new ExtensionContext();
     
     static {
-        // 手动注册扩展实现
+        // Manually register extension implementations
         extensionContext.register(
             new AlipayProcessor(),
             new DefaultPaymentProcessor()
@@ -164,7 +164,7 @@ class OrderService {
         PaymentContext context = new PaymentContext(order.getPaymentType());
         
         try (var scope = extensionContext.initScope(context)) {
-            // 自动选择匹配的实现
+            // Automatically select matching implementation
             PaymentProcessor processor = extensionContext.find(PaymentProcessor.class);
             return processor.processPayment(order);
         }
@@ -172,61 +172,61 @@ class OrderService {
 }
 ```
 
-**方式二：代理模式**
+**Method 2: Proxy Pattern**
 ```java
 class OrderService {
     private static final ExtensionContext extensionContext = new ExtensionContext();
     
     static {
-        // 手动注册扩展实现
+        // Manually register extension implementations
         extensionContext.register(
             new AlipayProcessor(),
             new DefaultPaymentProcessor()
         );
     }
     
-    // 创建代理对象，自动路由到匹配的实现
+    // Create proxy object that automatically routes to matching implementation
     private final PaymentProcessor paymentProcessor = extensionContext.proxy(PaymentProcessor.class);
 
     public PayResult processOrder(Order order) {
         PaymentContext context = new PaymentContext(order.getPaymentType());
         
         try (var ignored = extensionContext.initScope(context)) {
-            // 直接调用，框架自动选择实现
+            // Direct call, framework automatically selects implementation
             return paymentProcessor.processPayment(order);
         }
     }
 }
 ```
 
-## 📖 核心概念
+## 📖 Core Concepts
 
 ### ExtensionContext
-扩展点管理器，负责扩展实现的注册、查找和上下文管理。
+Extension point manager responsible for registration, lookup, and context management of extension implementations.
 
 ```java
 ExtensionContext context = new ExtensionContext();
 
-// 注册扩展实现（直接注册实例）
+// Register extension implementations (direct instance registration)
 context.register(new AlipayProcessor(), new WechatProcessor());
 
-// 查找单个实现（优先级最高的匹配实现）
+// Find single implementation (highest priority matching implementation)
 PaymentProcessor processor = context.find(PaymentProcessor.class);
 
-// 查找所有匹配的实现（按优先级排序）
+// Find all matching implementations (sorted by priority)
 List<PaymentProcessor> processors = context.findAll(PaymentProcessor.class);
 
-// 创建代理对象
+// Create proxy object
 PaymentProcessor proxy = context.proxy(PaymentProcessor.class);
 
-// 管理上下文作用域
+// Manage context scope
 try (ExtensionScope scope = context.initScope(contextObject)) {
-    // 在此作用域内进行扩展点调用
+    // Make extension point calls within this scope
 }
 ```
 
 ### Matcher<T>
-匹配器接口，用于判断扩展实现是否应该被执行。
+Matcher interface used to determine whether an extension implementation should be executed.
 
 ```java
 public interface Matcher<T> {
@@ -235,7 +235,7 @@ public interface Matcher<T> {
 ```
 
 ### Priority
-优先级接口，用于控制多个匹配实现的执行顺序。
+Priority interface used to control the execution order of multiple matching implementations.
 
 ```java
 public interface Priority {
@@ -246,16 +246,16 @@ public interface Priority {
 }
 ```
 
-## 🎯 高级特性
+## 🎯 Advanced Features
 
-### 扩展点复用
-同一个扩展实现可以服务多个业务场景：
+### Extension Point Reuse
+The same extension implementation can serve multiple business scenarios:
 
 ```java
 class StandardPriceCalculator implements PriceCalculator, Matcher<OrgContext> {
     @Override
     public boolean match(OrgContext context) {
-        // 支持多个组织使用相同实现
+        // Support multiple organizations using the same implementation
         return Arrays.asList("alibaba", "taobao", "tmall").contains(context.getOrgId());
     }
 
@@ -266,37 +266,37 @@ class StandardPriceCalculator implements PriceCalculator, Matcher<OrgContext> {
 }
 ```
 
-### 默认实现
-为扩展点提供兜底实现：
+### Default Implementation
+Provide fallback implementation for extension points:
 
 ```java
 @Extension
 class DefaultInventoryProcessor implements InventoryProcessor, Priority {
     @Override
     public void processInventory(Order order) {
-        // 默认处理逻辑
+        // Default processing logic
     }
 
     @Override
     public int getPriority() {
-        return Priority.LOWEST_PRECEDENCE; // 最低优先级，兜底使用
+        return Priority.LOWEST_PRECEDENCE; // Lowest priority, used as fallback
     }
 }
 ```
 
-### 多实现执行
-执行所有匹配的扩展实现：
+### Multiple Implementation Execution
+Execute all matching extension implementations:
 
 ```java
-// 获取所有匹配的通知发送器
+// Get all matching notification senders
 List<NotificationSender> senders = extensionContext.findAll(NotificationSender.class);
 
-// 逐个执行通知发送
+// Execute notification sending one by one
 for (NotificationSender sender : senders) {
     try {
         sender.sendNotification(message);
     } catch (Exception e) {
-        // 处理单个发送器的异常，不影响其他发送器
+        // Handle exceptions from individual senders without affecting others
         logger.warn("Failed to send notification via " + sender.getClass().getSimpleName(), e);
     }
 }

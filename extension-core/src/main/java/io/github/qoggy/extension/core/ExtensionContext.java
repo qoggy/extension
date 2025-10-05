@@ -10,7 +10,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * 扩展点上下文，负责扩展实现的注册、查找
+ * Extension context that manages registration and discovery of extension implementations.
+ * Provides centralized management for extensions with support for priority-based selection,
+ * context-aware matching, and proxy creation.
  *
  * @author yutianhong
  * @version 1.0
@@ -26,9 +28,9 @@ public final class ExtensionContext {
     private final Map<Class<?>, List<ExtensionImpl>> extensionCache = new ConcurrentHashMap<>();
 
     /**
-     * 注册扩展实现
+     * Registers extension implementations into the context.
      *
-     * @param extensionImpls 扩展实现数组
+     * @param extensionImpls Array of extension implementations to register
      */
     public void register(ExtensionImpl... extensionImpls) {
         if (extensionImpls == null || extensionImpls.length == 0) {
@@ -44,9 +46,10 @@ public final class ExtensionContext {
     }
 
     /**
-     * 注册扩展实现实例
+     * Registers extension implementation instances into the context.
+     * Automatically wraps instances into ExtensionImpl objects.
      *
-     * @param instances 扩展实现实例数组
+     * @param instances Array of extension implementation instances to register
      */
     public void register(Object... instances) {
         if (instances == null || instances.length == 0) {
@@ -61,19 +64,19 @@ public final class ExtensionContext {
     }
 
     /**
-     * 获取所有已注册的扩展实现
+     * Returns all registered extension implementations.
      *
-     * @return 不可修改的扩展实现列表
+     * @return Unmodifiable list of all registered extension implementations
      */
     public List<ExtensionImpl> getAll() {
         return Collections.unmodifiableList(extensions);
     }
 
     /**
-     * 查找单个扩展实现（优先级最高的匹配实现）
+     * Finds a single extension implementation with the highest priority that matches the current context.
      *
-     * @param extensionPointInterface 扩展点接口
-     * @return 匹配的扩展实现，如果没有找到返回null
+     * @param extensionPointInterface The extension point interface to find implementation for
+     * @return The matching extension implementation, or null if none found
      */
     public <T> T find(Class<T> extensionPointInterface) {
         List<T> all = findAll(extensionPointInterface);
@@ -81,10 +84,10 @@ public final class ExtensionContext {
     }
 
     /**
-     * 查找所有匹配的扩展实现，按优先级从高到低排序
+     * Finds all extension implementations that match the current context, sorted by priority (highest first).
      *
-     * @param extensionPointInterface 扩展点接口
-     * @return 匹配的扩展实现列表，按优先级排序
+     * @param extensionPointInterface The extension point interface to find implementations for
+     * @return List of matching extension implementations, sorted by priority
      */
     public <T> List<T> findAll(Class<T> extensionPointInterface) {
         Objects.requireNonNull(extensionPointInterface, "Extension point interface must not be null");
@@ -100,28 +103,30 @@ public final class ExtensionContext {
     }
 
     /**
-     * 创建扩展点的代理对象
+     * Creates a proxy object for the extension point interface that automatically routes method calls
+     * to the appropriate extension implementation based on the current context.
      *
-     * @param extensionPointInterface 扩展点接口
-     * @param <T>                     扩展点接口类型
-     * @return 代理对象
+     * @param extensionPointInterface The extension point interface to create proxy for
+     * @param <T>                     The extension point interface type
+     * @return Proxy object that delegates to matching extension implementations
      */
     public <T> T proxy(Class<T> extensionPointInterface) {
         return proxyFactory.createProxy(extensionPointInterface);
     }
 
     /**
-     * 初始化扩展上下文作用域
+     * Initializes an extension scope with the given context object.
+     * The scope should be used with try-with-resources for automatic cleanup.
      *
-     * @param scopeContext 作用域上下文对象
-     * @return 扩展作用域，使用try-with-resources自动管理
+     * @param scopeContext The context object to be used for extension matching
+     * @return Extension scope that manages the context lifecycle
      */
     public ExtensionScope initScope(Object scopeContext) {
         return new ExtensionScope(extensionScopeHolder, scopeContext);
     }
 
     /**
-     * 清空所有缓存
+     * Clears all internal caches.
      */
     void clearCache() {
         extensionCache.clear();
