@@ -4,6 +4,28 @@
 
 [📖 English Documentation](README-EN.md) | 📖 中文文档
 
+## 🏗️ 框架架构
+
+```mermaid
+graph TD
+    A[Business Call<br/>业务调用] --> B[Extension Point Interface<br/>扩展点接口]
+    B --> C[ExtensionContext<br/>扩展点管理器]
+    C --> D{Context Matching<br/>上下文匹配}
+
+    D -->|match CondA| E[Extension A<br/>扩展实现A]
+    D -->|match CondB| F[Extension B<br/>扩展实现B]
+    D -->|No Match| G[Default Extension<br/>默认实现]
+
+    E --> H[Execute Business Logic<br/>执行业务逻辑]
+    F --> H
+    G --> H
+
+    style A fill:#e1f5fe
+    style C fill:#f3e5f5
+    style D fill:#fff3e0
+    style H fill:#e8f5e8
+```
+
 ## ✨ 核心特性
 
 - **轻量级**：最小化依赖，专注核心功能
@@ -20,7 +42,7 @@
 <dependency>
     <groupId>io.github.qoggy</groupId>
     <artifactId>extension-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -29,7 +51,7 @@
 <dependency>
     <groupId>io.github.qoggy</groupId>
     <artifactId>extension-core</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 

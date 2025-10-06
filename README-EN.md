@@ -4,6 +4,28 @@ A lightweight and easy-to-use Java extension point framework designed to solve e
 
 📖 English Documentation | [📖 中文文档](README.md)
 
+## 🏗️ Framework Architecture
+
+```mermaid
+graph TD
+    A[Business Call] --> B[Extension Point Interface]
+    B --> C[ExtensionContext<br/>Extension Manager]
+    C --> D{Context Matching}
+
+    D -->|match CondA| E[Extension A]
+    D -->|match CondB| F[Extension B]
+    D -->|No Match| G[Default Extension<br/>Fallback]
+
+    E --> H[Execute Business Logic]
+    F --> H
+    G --> H
+
+    style A fill:#e1f5fe
+    style C fill:#f3e5f5
+    style D fill:#fff3e0
+    style H fill:#e8f5e8
+```
+
 ## ✨ Core Features
 
 - **Lightweight**: Minimal dependencies, focused on core functionality
@@ -20,7 +42,7 @@ A lightweight and easy-to-use Java extension point framework designed to solve e
 <dependency>
     <groupId>io.github.qoggy</groupId>
     <artifactId>extension-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -29,7 +51,7 @@ A lightweight and easy-to-use Java extension point framework designed to solve e
 <dependency>
     <groupId>io.github.qoggy</groupId>
     <artifactId>extension-core</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
