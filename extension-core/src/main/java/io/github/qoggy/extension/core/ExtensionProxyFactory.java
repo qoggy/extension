@@ -74,7 +74,7 @@ class ExtensionProxyFactory {
         try {
             return new ByteBuddy()
                     .subclass(extensionPointInterface)
-                    .method(ElementMatchers.isDeclaredBy(extensionPointInterface))
+                    .method(ElementMatchers.not(ElementMatchers.isDeclaredBy(Object.class)))
                     .intercept(MethodDelegation.to(new ExtensionMethodInterceptor(extensionContext, extensionPointInterface)))
                     .make()
                     .load(getClass().getClassLoader())

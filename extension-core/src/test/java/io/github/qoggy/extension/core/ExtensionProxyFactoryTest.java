@@ -226,4 +226,37 @@ class ExtensionProxyFactoryTest {
             return called;
         }
     }
+
+
+    public interface TestInheritedExtensionPoint extends TestExtensionPoint {
+        Integer getNumber();
+    }
+
+    static class TestInheritedExtensionImpl implements TestInheritedExtensionPoint {
+        private final String value;
+        private final Integer number;
+
+        public TestInheritedExtensionImpl(String value, Integer number) {
+            this.value = value;
+            this.number = number;
+        }
+
+        @Override
+        public Integer getNumber() {
+            return number;
+        }
+
+        @Override
+        public String getValue() {
+            return value;
+        }
+    }
+
+    @Test
+    void testCreateProxy_inheritedExtensionPoint() {
+        extensionContext.register(new TestInheritedExtensionImpl("test", 100));
+        TestInheritedExtensionPoint proxy = proxyFactory.createProxy(TestInheritedExtensionPoint.class);
+        assertEquals("test", proxy.getValue());
+        assertEquals(100, proxy.getNumber());
+    }
 }
