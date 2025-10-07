@@ -121,8 +121,8 @@ public final class ExtensionContext {
      * @param scopeContext The context object to be used for extension matching
      * @return Extension scope that manages the context lifecycle
      */
-    public ExtensionScope initScope(Object scopeContext) {
-        return new ExtensionScope(extensionScopeHolder, scopeContext);
+    public <T> ExtensionScope<T> initScope(T scopeContext) {
+        return new ExtensionScope<>(extensionScopeHolder, scopeContext);
     }
 
     /**

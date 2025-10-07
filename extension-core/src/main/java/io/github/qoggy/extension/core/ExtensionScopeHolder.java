@@ -9,16 +9,16 @@ import java.util.List;
  * @since 2025/10/4 22:49
  */
 class ExtensionScopeHolder {
-    private final ThreadLocal<List<Object>> contextStack = ThreadLocal.withInitial(ArrayList::new);
+    private final ThreadLocal<List<ExtensionScope<?>>> scopeStack = ThreadLocal.withInitial(ArrayList::new);
 
-    public void push(Object context) {
-        contextStack.get().add(context);
+    void push(ExtensionScope<?> scope) {
+        scopeStack.get().add(scope);
     }
 
-    public <T> T getContext(Class<T> contextClass) {
-        List<Object> stack = contextStack.get();
+    <T> T getContext(Class<T> contextClass) {
+        List<ExtensionScope<?>> stack = scopeStack.get();
         for (int i = stack.size() - 1; i >= 0; i--) {
-            Object obj = stack.get(i);
+            Object obj = stack.get(i).getScopeContext();
             if (obj != null && contextClass.isAssignableFrom(obj.getClass())) {
                 return (T) obj;
             }
@@ -26,13 +26,16 @@ class ExtensionScopeHolder {
         return null;
     }
 
-    public void pop() {
-        List<Object> stack = contextStack.get();
-        if (!stack.isEmpty()) {
-            stack.remove(stack.size() - 1);
+    void pop(ExtensionScope<?> scope) {
+        List<ExtensionScope<?>> stack = scopeStack.get();
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            if (stack.get(i) == scope) {
+                stack.remove(i);
+                break;
+            }
         }
         if (stack.isEmpty()) {
-            contextStack.remove();
+            scopeStack.remove();
         }
     }
 }
