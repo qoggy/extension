@@ -3,8 +3,9 @@ package io.github.qoggy.extension.boot;
 import io.github.qoggy.extension.boot.annotation.Extension;
 import io.github.qoggy.extension.boot.annotation.ExtensionInject;
 import io.github.qoggy.extension.core.ExtensionContext;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 
@@ -19,26 +20,28 @@ import java.lang.reflect.Field;
  * @version 1.0
  * @since 2025/10/5 02:40
  */
-public class ExtensionInstantiationAwareBeanPostProcessor implements InstantiationAwareBeanPostProcessor {
+public class ExtensionBeanPostProcessor implements BeanPostProcessor {
 
     private final ExtensionContext extensionContext;
 
-    public ExtensionInstantiationAwareBeanPostProcessor(ExtensionContext extensionContext) {
+    public ExtensionBeanPostProcessor(ExtensionContext extensionContext) {
         this.extensionContext = extensionContext;
     }
 
     @Override
-    public boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
-        // 检查是否标注了@Extension注解，如果是则注册为扩展实现
-        if (AnnotationUtils.findAnnotation(bean.getClass(), Extension.class) != null) {
-            extensionContext.register(bean);
-        }
-        return true;
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        // 处理@ExtensionInject注入
+        processExtensionInject(bean);
+        return bean;
     }
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        processExtensionInject(bean);
+        // 检查是否标注了@Extension注解，如果是则注册为扩展实现
+        Class<?> targetClass = AopUtils.getTargetClass(bean);
+        if (AnnotationUtils.findAnnotation(targetClass, Extension.class) != null) {
+            extensionContext.register(bean);
+        }
         return bean;
     }
 

@@ -22,6 +22,7 @@
         <!-- Test libs -->
         <junit-jupiter-api.version>5.10.3</junit-jupiter-api.version>
         <mockito-core.version>5.14.2</mockito-core.version>
+        <h2.version>2.2.224</h2.version>
         <!-- Build -->
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
@@ -87,6 +88,7 @@
                 <version>${byte-buddy.version}</version>
             </dependency>
 
+            <!-- 测试依赖 -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-test</artifactId>
@@ -105,11 +107,29 @@
                 <version>3.24.2</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
                 <version>${mockito-core.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Spring事务和JDBC支持（用于测试AOP代理） -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-tx</artifactId>
+                <version>${spring.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${spring.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

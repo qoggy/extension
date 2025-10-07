@@ -4,6 +4,7 @@ import io.github.qoggy.extension.boot.annotation.Extension;
 import io.github.qoggy.extension.boot.annotation.ExtensionInject;
 import io.github.qoggy.extension.core.ExtensionContext;
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
@@ -28,9 +29,9 @@ class ExtensionAutoConfigurationTest {
     void testAutoConfiguration_shouldCreateExtensionContextBean() {
         contextRunner.run(context -> {
             assertTrue(context.containsBean("extensionContext"));
-            assertTrue(context.containsBean("extensionInstantiationAwareBeanPostProcessor"));
+            assertTrue(context.containsBean("extensionBeanPostProcessor"));
             assertNotNull(context.getBean(ExtensionContext.class));
-            assertNotNull(context.getBean(ExtensionInstantiationAwareBeanPostProcessor.class));
+            assertNotNull(context.getBean(ExtensionBeanPostProcessor.class));
         });
     }
 
@@ -99,6 +100,113 @@ class ExtensionAutoConfigurationTest {
         @Bean
         public TestService testService() {
             return new TestService();
+        }
+    }
+
+    @Test
+    void testExtensionRegistration_shouldRegisterSpringProxiedBean() {
+        contextRunner
+                .withUserConfiguration(ProxyTestConfiguration.class)
+                .run(context -> {
+                    ExtensionContext extensionContext = context.getBean(ExtensionContext.class);
+
+                    // 通过Bean名称获取Spring容器中的Bean（可能是代理对象）
+                    ProxiedExtensionPoint springBean = context.getBean(ProxiedExtensionPoint.class);
+
+                    // 获取扩展框架中注册的实现
+                    ProxiedExtensionPoint registeredExtension = extensionContext.find(ProxiedExtensionPoint.class);
+                    assertNotNull(registeredExtension, "扩展框架中应该能找到ProxiedExtensionPoint的实现");
+
+                    // 验证扩展注册：Spring Bean和注册的扩展应该是同一个代理对象
+                    assertTrue(AopUtils.isAopProxy(springBean), "Spring Bean应该被代理");
+                    assertTrue(AopUtils.isAopProxy(registeredExtension), "注册的扩展实现应该被代理");
+                    assertSame(springBean, registeredExtension, "Spring Bean和注册的扩展实现应该是同一个对象");
+
+                    // 验证方法调用正常
+                    String springResult = springBean.doSomethingWithTransaction();
+                    String extensionResult = registeredExtension.doSomethingWithTransaction();
+                    assertEquals(springResult, extensionResult, "通过不同方式调用应该返回相同结果");
+                });
+    }
+
+    @Test
+    void testExtensionInject_shouldInjectIntoSpringProxiedBean() {
+        contextRunner
+                .withUserConfiguration(ProxyTestConfiguration.class)
+                .run(context -> {
+                    // 验证@ExtensionInject注入功能
+                    ProxiedServiceWithInject serviceWithInject = context.getBean(ProxiedServiceWithInject.class);
+
+                    // 验证服务类被正确代理
+                    assertTrue(AopUtils.isAopProxy(serviceWithInject), "带有@Transactional的服务类应该被代理");
+
+                    // 验证注入的扩展是框架代理（这是预期行为）
+                    assertNotNull(serviceWithInject.getInjectedExtension(), "@ExtensionInject应该成功注入扩展实现");
+                    String injectedExtensionClassName = serviceWithInject.getInjectedExtension().getClass().getName();
+                    assertTrue(injectedExtensionClassName.contains("$ByteBuddy"), "注入的扩展应该是代理对象");
+
+                    // 验证注入的扩展功能正常
+                    String injectedResult = serviceWithInject.callInjectedExtension();
+                    assertEquals("ProxiedExtensionImpl with transaction", injectedResult,
+                            "@ExtensionInject注入的扩展应该能正常调用");
+                });
+    }
+
+    // 测试用的扩展点接口（带事务注解）
+    public interface ProxiedExtensionPoint {
+        String doSomethingWithTransaction();
+    }
+
+    // 测试用的扩展实现（带事务注解，会被Spring代理）
+    @Extension
+    static class ProxiedExtensionImpl implements ProxiedExtensionPoint {
+
+        @Override
+        @org.springframework.transaction.annotation.Transactional
+        public String doSomethingWithTransaction() {
+            return "ProxiedExtensionImpl with transaction";
+        }
+    }
+
+    // 测试用的服务类，使用@ExtensionInject注入扩展
+    static class ProxiedServiceWithInject {
+        @ExtensionInject
+        private ProxiedExtensionPoint injectedExtension;
+
+        public ProxiedExtensionPoint getInjectedExtension() {
+            return injectedExtension;
+        }
+
+        @org.springframework.transaction.annotation.Transactional
+        public String callInjectedExtension() {
+            return injectedExtension != null ? injectedExtension.doSomethingWithTransaction() : null;
+        }
+    }
+
+    @Configuration
+    @org.springframework.transaction.annotation.EnableTransactionManagement
+    static class ProxyTestConfiguration {
+        @Bean
+        public javax.sql.DataSource dataSource() {
+            return new org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder()
+                    .setType(org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.H2)
+                    .build();
+        }
+
+        // 添加一个简单的事务管理器，让Spring创建代理
+        @Bean
+        public org.springframework.transaction.PlatformTransactionManager transactionManager(javax.sql.DataSource dataSource) {
+            return new org.springframework.jdbc.datasource.DataSourceTransactionManager(dataSource);
+        }
+
+        @Bean
+        public ProxiedExtensionImpl proxiedExtensionImpl() {
+            return new ProxiedExtensionImpl();
+        }
+
+        @Bean
+        public ProxiedServiceWithInject proxiedServiceWithInject() {
+            return new ProxiedServiceWithInject();
         }
     }
 

@@ -19,7 +19,7 @@ public class ExtensionAutoConfiguration {
     }
 
     @Bean
-    public ExtensionInstantiationAwareBeanPostProcessor extensionInstantiationAwareBeanPostProcessor(ExtensionContext extensionContext) {
-        return new ExtensionInstantiationAwareBeanPostProcessor(extensionContext);
+    public ExtensionBeanPostProcessor extensionBeanPostProcessor(ExtensionContext extensionContext) {
+        return new ExtensionBeanPostProcessor(extensionContext);
     }
 }
